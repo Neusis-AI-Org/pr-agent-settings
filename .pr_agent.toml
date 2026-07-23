@@ -1,0 +1,35 @@
+# Org-wide PR-Agent configuration for Neusis-AI-Org.
+#
+# This file is auto-discovered by PR-Agent from Neusis-AI-Org/pr-agent-settings
+# (read from this repo's default branch) and applied as the GLOBAL default for
+# every repo in the org that runs PR-Agent. This repo is PUBLIC so the default
+# per-repo GITHUB_TOKEN can read it; a private settings repo would be silently
+# skipped and every repo would fall back to PR-Agent's built-in defaults.
+#
+# Precedence (low -> high):
+#   built-in defaults < global (this file) < a repo's own .pr_agent.toml < wiki < env vars
+# So any repo can override these locally by committing its own .pr_agent.toml.
+#
+# Only repos that contain a PR-Agent workflow actually run it; this config has
+# no effect on repos without one.
+
+[config]
+# Bare "gpt-5.5" (not "openai/gpt-5.5"): it is in PR-Agent's MAX_TOKENS table, so
+# no custom_model_max_tokens is needed, and OPENAI__API_BASE routes it to the
+# Neusis LiteLLM proxy (which serves model_name "gpt-5.5").
+model = "gpt-5.5"
+fallback_models = []
+# Tuned down from the model's ~1.05M window to cap per-PR cost (model tokens +
+# Model Armor per-request billing). A repo with large PRs can raise this locally.
+max_model_tokens = 256000
+
+[github_action_config]
+auto_review = true
+auto_describe = true
+auto_improve = false
+# false: do NOT re-review on every push to a PR (cost). `/review` still works on demand.
+handle_push_trigger = false
+
+[pr_code_suggestions]
+commitable_code_suggestions = true
+num_code_suggestions_per_chunk = 4
