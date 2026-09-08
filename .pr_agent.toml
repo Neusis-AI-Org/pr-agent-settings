@@ -14,12 +14,16 @@
 # no effect on repos without one.
 
 [config]
-# Bare "gpt-5.5" (not "openai/gpt-5.5"): it is in PR-Agent's MAX_TOKENS table, so
-# no custom_model_max_tokens is needed, and OPENAI__API_BASE routes it to the
-# Neusis LiteLLM proxy (which serves model_name "gpt-5.5").
-model = "gpt-5.5"
-fallback_models = []
-# Tuned down from the model's ~1.05M window to cap per-PR cost (model tokens +
+# gpt-6-astra is the proxy's flagship after the 2026-09 catalog resync
+# (litellm-proxy ADR-0020); gpt-5.6-sol is the fallback. Both route via
+# OPENAI__API_BASE to the Neusis LiteLLM proxy and both have a 272k context
+# window. Unlike the retired "gpt-5.5", neither is in PR-Agent's built-in
+# MAX_TOKENS table, so custom_model_max_tokens is set explicitly (covers the
+# primary + the fallback, since both are 272k).
+model = "gpt-6-astra"
+fallback_models = ["gpt-5.6-sol"]
+custom_model_max_tokens = 272000
+# Tuned down from the model's 272k window to cap per-PR cost (model tokens +
 # Model Armor per-request billing). A repo with large PRs can raise this locally.
 max_model_tokens = 256000
 
