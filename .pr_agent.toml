@@ -7,7 +7,7 @@
 # skipped and every repo would fall back to PR-Agent's built-in defaults.
 #
 # Precedence (low -> high):
-#   built-in defaults < global (this file) < a repo's own .pr_agent.toml < wiki < env vars
+#   built-in defaults < global (this file) < a repo's own .pr_agent.toml < env vars
 # So any repo can override these locally by committing its own .pr_agent.toml.
 #
 # Only repos that contain a PR-Agent workflow actually run it; this config has
@@ -16,16 +16,26 @@
 [config]
 # gpt-6-astra is the proxy's flagship (litellm-proxy ADR-0020); gpt-6.1-sol is
 # the fallback since the proxy retired the gpt-5.6-* models (litellm-proxy
-# ADR-0022). Both route via OPENAI__API_BASE to the Neusis LiteLLM proxy and
-# both have a 272k context window. Neither is in PR-Agent's built-in MAX_TOKENS
-# table, so custom_model_max_tokens is set explicitly (covers the primary + the
-# fallback, since both are 272k).
+# ADR-0022). Both route via OPENAI__API_BASE to the Neusis LiteLLM proxy.
 model = "gpt-6-astra"
-fallback_models = ["gpt-6.1-sol"]
+# The "openai/" prefix is required: PR-Agent only adds it for gpt-5* and
+# gpt-6-astra, and a bare id fails before reaching the proxy.
+fallback_models = ["openai/gpt-6.1-sol"]
+# gpt-6.1-sol is not in PR-Agent's token table (272k window).
 custom_model_max_tokens = 272000
-# Tuned down from the model's 272k window to cap per-PR cost (model tokens +
+# Tuned down from the models' 272k window to cap per-PR cost (model tokens +
 # Model Armor per-request billing). A repo with large PRs can raise this locally.
 max_model_tokens = 256000
+# Highest effort the proxy passes through ("max" is dropped). Applies to
+# gpt-6-astra; the fallback runs at the backend default.
+reasoning_effort = "xhigh"
+# gpt-6* models reject the temperature PR-Agent would otherwise send.
+no_temperature_models = ["gpt-6.1-sol"]
+# Per HTTP attempt, under the proxy's 300s request timeout. On a timeout, go
+# straight to the fallback instead of retrying.
+ai_timeout = 280
+retry_same_model_on_timeout = false
+num_retries = 0
 
 [github_action_config]
 auto_review = true
@@ -35,5 +45,5 @@ auto_improve = false
 handle_push_trigger = false
 
 [pr_code_suggestions]
-commitable_code_suggestions = true
+committable_code_suggestions = true
 num_code_suggestions_per_chunk = 4
